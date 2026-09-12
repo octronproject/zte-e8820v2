@@ -50,7 +50,7 @@ jobs:
         if [ -f "../.config" ]; then
           cp -f ../.config .config
           echo "Berhasil menyalin .config kustom!"
-        
+        fi
         cd openwrt
         make defconfig
 
