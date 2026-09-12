@@ -38,7 +38,7 @@ jobs:
     - name: Eksekusi Metode Menimpa File Langsung (OpenWrt Official)
       run: |
         # 1. Menambahkan/menimpa file DTS baru untuk E8820V2 ke folder dts
-        cp -f custom/mt7621_zte_e8820V2.dts openwrt/target/linux/ramips/dts/
+        cp -f custom/mt7621_zte_e8820v2.dts openwrt/target/linux/ramips/dts/
 
         # 2. Menimpa file Makefile (.mk) bawaan asli dengan file .mk kustom Anda (yang sudah ada profil e8820v2)
         cp -f custom/mt7621.mk openwrt/target/linux/ramips/image/
