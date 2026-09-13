@@ -27,7 +27,7 @@ jobs:
         
     - name: Clone Source Code OpenWrt Official v25.12.5
       run: |
-        git clone https://github.com
+        git clone https://github.com/openwrt/openwrt.git
         cd openwrt
         git pull
         git checkout v25.12.5
