@@ -84,15 +84,16 @@ jobs:
     - name: Organize Files
       id: organize
       run: |
-        echo "FIRMWARE_PATH=$PWD" >> $GITHUB_ENV
+        mkdir -p ./firmware_output
+        # Extract only the firmware binaries (the actual deliverables)
+        find openwrt/bin -type f \( -name "*.bin" -o -name "*.img" -o -name "*.sysupgrade*" \) -exec cp {} ./firmware_output/ \;
+        echo "FIRMWARE_PATH=$PWD/firmware_output" >> $GITHUB_ENV
+        echo "Build completed. Firmware files ready for upload."
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
         name: OpenWrt_25.12.5_ZTE_E8820V2_${{ env.BUILD_DATE }}
-        path: ${{ env.FIRMWARE_PATH }}/*
-        exclusions: |
-          openwrt/build_dir/**
-          openwrt/staging_dir/**
-          openwrt/.git/**
+        path: ${{ env.FIRMWARE_PATH }}
+        if-no-files-found: warn
 
