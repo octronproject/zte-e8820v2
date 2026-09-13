@@ -79,13 +79,11 @@ jobs:
     - name: Proses Kompilasi Firmware
       working-directory: openwrt
       run: |
-        cd openwrt
         make -j$(nproc) world || make -j1 V=s world
 
     - name: Organize Files
       id: organize
       run: |
-        cd openwrt/bin/targets/ramips/mt7621
         echo "FIRMWARE_PATH=$PWD" >> $GITHUB_ENV
 
     - name: Upload Artifact
