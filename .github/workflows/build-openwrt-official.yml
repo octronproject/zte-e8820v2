@@ -3,7 +3,7 @@ name: Build OpenWrt Official v25.12.5 - ZTE E8820V2
 on:
   workflow_dispatch:
   
-  env:
+env:
     TZ: Asia/Jakarta
 
 jobs:
