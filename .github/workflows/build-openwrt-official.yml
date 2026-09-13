@@ -2,6 +2,9 @@ name: Build OpenWrt Official v25.12.5 - ZTE E8820V2
 
 on:
   workflow_dispatch:
+  
+env:
+  TZ: Asia/Jakarta
 
 jobs:
   build:
@@ -10,6 +13,11 @@ jobs:
     steps:
     - name: Checkout Repositori Anda
       uses: actions/checkout@v4
+      
+    - name: Set Timezone to WIB
+      run: |
+        sudo timedatectl set-timezone "Asia/Jakarta"
+        echo "BUILD_DATE=$(date +'%Y%m%d-%H%M')" >> $GITHUB_ENV
 
     - name: Mempersiapkan Lingkungan Ubuntu
       env:
@@ -66,22 +74,28 @@ jobs:
           cp -f ../.config .config
           echo "Berhasil menyalin .config kustom ke folder openwrt!"
         fi
+        
         make defconfig
 
     - name: Unduh Paket Dependensi (Make Download)
       run: |
-        cd openwrt
-        make download -j8
-        find dl -size -1024c -exec ls -l {} \;
-        find dl -size -1024c -exec rm -f {} \;
-
+        make download -j$(nproc)
+        find dl -size 0 -exec rm -f {} \;
+        
     - name: Proses Kompilasi Firmware
       run: |
         cd openwrt
-        make -j$(nproc) || make -j1 V=s
+        make -j$(nproc) world || make -j1 V=s world
 
-    - name: Unggah Hasil Firmware (Artifacts)
+    - name: Organize Files
+      id: organize
+      run: |
+        echo "BUILD_DATE=$(date +'%Y.%m.%d-%H%M')" >> $GITHUB_ENV
+        cd openwrt/bin/targets/ramips/mt7621
+        echo "FIRMWARE_PATH=$PWD" >> $GITHUB_ENV
+
+    - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: OpenWrt_Official_ZTE_E8820V2_v25.12.5
-        path: openwrt/bin/targets/ramips/mt7621/**
+        name: OpenWrt_25.12.5_ZTE_E8820V2_${{ env.BUILD_DATE }}
+        path: ${{ env.FIRMWARE_PATH }}/*
