@@ -64,4 +64,6 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: OpenWrt_Official_ZTE_E8820V2_v25.12.5
-        path: openwrt/bin/targets/ramips/mt7621/*e8820v2*
+        path: |
+          openwrt/bin/targets/ramips/mt7621/*.bin
+          openwrt/bin/targets/ramips/mt7621/*.tar*
