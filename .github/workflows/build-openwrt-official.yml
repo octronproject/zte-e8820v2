@@ -27,7 +27,7 @@ jobs:
         
     - name: Clone Source Code OpenWrt Official v25.12.5
       run: |
-        git clone https://github.com/openwrt/openwrt.git
+        git clone https://github.com
         cd openwrt
         git pull
         git checkout v25.12.5
@@ -54,18 +54,18 @@ jobs:
         # 1. Menambahkan/menimpa file DTS baru untuk E8820V2 ke folder dts
         cp -f custom/mt7621_zte_e8820v2.dts openwrt/target/linux/ramips/dts/
 
-        # 2. Menimpa file Makefile (.mk) bawaan asli dengan file .mk kustom Anda (yang sudah ada profil e8820v2)
+        # 2. Menimpa file Makefile (.mk) bawaan asli dengan file .mk kustom Anda
         cp -f custom/mt7621.mk openwrt/target/linux/ramips/image/
 
         # 3. Menimpa file LED dan Network bawaan asli dengan versi kustom Anda
         cp -f custom/01_leds openwrt/target/linux/ramips/mt7621/base-files/etc/board.d/
 
-        # 4. Menimpa file konfigurasi .config untuk E8820V2
+        # 4. Masuk ke folder openwrt terlebih dahulu sebelum menyalin dan memproses .config
+        cd openwrt
         if [ -f "../.config" ]; then
           cp -f ../.config .config
-          echo "Berhasil menyalin .config kustom!"
+          echo "Berhasil menyalin .config kustom ke folder openwrt!"
         fi
-        cd openwrt
         make defconfig
 
     - name: Unduh Paket Dependensi (Make Download)
@@ -84,6 +84,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: OpenWrt_Official_ZTE_E8820V2_v25.12.5
-        path: |
-          openwrt/bin/targets/ramips/mt7621/*.bin
-          openwrt/bin/targets/ramips/mt7621/*.tar*
+        path: openwrt/bin/targets/ramips/mt7621/**
