@@ -24,17 +24,31 @@ jobs:
         python3-setuptools rsync swig unzip zlib1g-dev file wget
         sudo -E apt-get autoremove --purge -y
         sudo -E apt-get clean
+        
     - name: Clone Source Code OpenWrt Official v25.12.5
       run: |
         git clone https://github.com/openwrt/openwrt.git
         cd openwrt
         git pull
         git checkout v25.12.5
+
+    - name: Setup Cache Toolchain & DL
+      uses: actions/cache@v4
+      with:
+        path: |
+          openwrt/staging_dir/host
+          openwrt/staging_dir/toolchain-*
+          openwrt/dl
+        key: ${{ runner.os }}-openwrt-official-v25.12.5-${{ hashFiles('openwrt/feeds.conf.default') }}
+        restore-keys: |
+          ${{ runner.os }}-openwrt-official-v25.12.5-
+          
     - name: Update & Install Feeds
       run: |
         cd openwrt
         ./scripts/feeds update -a
         ./scripts/feeds install -a
+        
     - name: Eksekusi Metode Menimpa File Langsung (OpenWrt Official)
       run: |
         # 1. Menambahkan/menimpa file DTS baru untuk E8820V2 ke folder dts
@@ -54,10 +68,16 @@ jobs:
         cd openwrt
         make defconfig
 
-    - name: Proses Kompilasi Firmware
+    - name: Unduh Paket Dependensi (Make Download)
       run: |
         cd openwrt
         make download -j8
+        find dl -size -1024c -exec ls -l {} \;
+        find dl -size -1024c -exec rm -f {} \;
+
+    - name: Proses Kompilasi Firmware
+      run: |
+        cd openwrt
         make -j$(nproc) || make -j1 V=s
 
     - name: Unggah Hasil Firmware (Artifacts)
