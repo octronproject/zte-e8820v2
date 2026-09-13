@@ -91,4 +91,8 @@ jobs:
       with:
         name: OpenWrt_25.12.5_ZTE_E8820V2_${{ env.BUILD_DATE }}
         path: ${{ env.FIRMWARE_PATH }}/*
+        exclusions: |
+          openwrt/build_dir/**
+          openwrt/staging_dir/**
+          openwrt/.git/**
 
