@@ -1,4 +1,4 @@
-name: Build OpenWrt Official v25.12.5 - ZTE E8820V2
+name: Build OpenWrt Official v21.02.7 - ZTE E8820V2
 
 on:
   workflow_dispatch:
@@ -54,11 +54,11 @@ jobs:
         [ -f ".config" ] || (echo "❌ Missing: .config" && exit 1)
         echo "✓ All custom files found"
 
-    - name: Clone OpenWrt Official v25.12.5
+    - name: Clone OpenWrt Official v21.02.7
       run: |
         set -e
-        echo "📥 Cloning OpenWrt v25.12.5..."
-        git clone --depth 1 --branch v25.12.5 https://github.com/openwrt/openwrt.git openwrt
+        echo "📥 Cloning OpenWrt v21.02.7..."
+        git clone --depth 1 --branch v21.02.7 https://github.com/openwrt/openwrt.git openwrt
 
     - name: Copy and overwrite custom files (with backups)
       run: |
