@@ -112,6 +112,18 @@ jobs:
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
+      - name: Copy .config file
+        run: |
+          set -e
+          if [ -f custom/.config ]; then
+            cp -v custom/.config "${OPENWRT_DIR}/.config"
+            echo ".config file copied successfully"
+            echo "Content of copied .config:"
+            head -20 "${OPENWRT_DIR}/.config"
+          else
+            echo "custom/.config not found, skipping"
+          fi
+
       - name: Configure and enable ccache
         working-directory: ${{ env.OPENWRT_DIR }}
         env:
