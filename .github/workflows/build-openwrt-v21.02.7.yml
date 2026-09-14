@@ -1,0 +1,144 @@
+name: Build OpenWrt v21.02.7 (custom replace + cache + profile image)
+
+on:
+  workflow_dispatch:
+    inputs:
+      openwrt_ref:
+        description: 'OpenWrt branch/tag to clone (branch or tag). Default: v21.02.7'
+        required: false
+        default: 'v21.02.7'
+      image_profile:
+        description: 'Image PROFILE to build (example: zte_e8820v2)'
+        required: false
+        default: 'zte_e8820v2'
+
+jobs:
+  build-openwrt:
+    runs-on: ubuntu-latest
+    env:
+      OPENWRT_REF: ${{ github.event.inputs.openwrt_ref }}
+      OPENWRT_DIR: openwrt
+      IMAGE_PROFILE: ${{ github.event.inputs.image_profile }}
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+
+    steps:
+      - name: Checkout repository (to access ./custom)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Ensure ccache dir
+        run: |
+          mkdir -p "${CCACHE_DIR}"
+          ccache -M 5G || true
+
+      - name: Cache OpenWrt downloads (dl)
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ github.workspace }}/openwrt/dl
+          key: ${{ runner.os }}-openwrt-dl-${{ hashFiles('custom/**') }}
+          restore-keys: |
+            ${{ runner.os }}-openwrt-dl-
+
+      - name: Cache staging_dir, build_dir and ccache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ github.workspace }}/openwrt/staging_dir
+            ${{ github.workspace }}/openwrt/build_dir
+            ${{ github.workspace }}/.ccache
+          key: ${{ runner.os }}-openwrt-build-${{ hashFiles('custom/**') }}
+          restore-keys: |
+            ${{ runner.os }}-openwrt-build-
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential libncurses5-dev zlib1g-dev gawk flex quilt gettext \
+            wget patch bzip2 unzip python3 python3-distutils libssl-dev ccache subversion git
+
+      - name: Clone OpenWrt ${{ env.OPENWRT_REF }}
+        run: |
+          set -e
+          git clone --depth 1 --branch "${OPENWRT_REF}" https://github.com/openwrt/openwrt.git "${OPENWRT_DIR}"
+
+      - name: Show custom files
+        run: |
+          echo "Listing ./custom"
+          ls -la custom || true
+
+      - name: Replace OpenWrt files with custom files
+        run: |
+          set -e
+          mkdir -p "${OPENWRT_DIR}/target/linux/ramips/mt7621/base-files/etc/board.d"
+          mkdir -p "${OPENWRT_DIR}/target/linux/ramips/dts"
+          mkdir -p "${OPENWRT_DIR}/target/linux/ramips/image"
+
+          if [ -f custom/01_leds ]; then
+            cp -v custom/01_leds "${OPENWRT_DIR}/target/linux/ramips/mt7621/base-files/etc/board.d/01_leds"
+          else
+            echo "custom/01_leds not found, skipping"
+          fi
+
+          if [ -f custom/02_network ]; then
+            cp -v custom/02_network "${OPENWRT_DIR}/target/linux/ramips/mt7621/base-files/etc/board.d/02_network"
+          else
+            echo "custom/02_network not found, skipping"
+          fi
+
+          if [ -f custom/mt7621_zte_e8820v2.dts ]; then
+            cp -v custom/mt7621_zte_e8820v2.dts "${OPENWRT_DIR}/target/linux/ramips/dts/mt7621_zte_e8820v2.dts"
+          else
+            echo "custom/mt7621_zte_e8820v2.dts not found, skipping"
+          fi
+
+          if [ -f custom/mt7621.mk ]; then
+            cp -v custom/mt7621.mk "${OPENWRT_DIR}/target/linux/ramips/image/mt7621.mk"
+          else
+            echo "custom/mt7621.mk not found, skipping"
+          fi
+
+          echo "After copy:"
+          ls -la "${OPENWRT_DIR}/target/linux/ramips/mt7621/base-files/etc/board.d" || true
+          ls -la "${OPENWRT_DIR}/target/linux/ramips/dts" || true
+          ls -la "${OPENWRT_DIR}/target/linux/ramips/image" || true
+
+      - name: Prepare OpenWrt feeds
+        working-directory: ${{ env.OPENWRT_DIR }}
+        run: |
+          set -e
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+
+      - name: Configure and enable ccache
+        working-directory: ${{ env.OPENWRT_DIR }}
+        env:
+          CCACHE_DIR: ${{ github.workspace }}/.ccache
+          USE_CCACHE: '1'
+        run: |
+          set -e
+          export CCACHE_DIR="${CCACHE_DIR}"
+          export USE_CCACHE=1
+          ccache -M 5G || true
+          make defconfig
+
+      - name: Build specific image PROFILE
+        working-directory: ${{ env.OPENWRT_DIR }}
+        env:
+          CCACHE_DIR: ${{ github.workspace }}/.ccache
+          USE_CCACHE: '1'
+        run: |
+          set -e
+          echo "Building image PROFILE=${IMAGE_PROFILE}"
+          make -j$(nproc) V=s image PROFILE="${IMAGE_PROFILE}"
+
+      - name: Upload build artifacts (bin/targets and images)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: openwrt-bin-targets-and-images
+          path: |
+            openwrt/bin/targets
+            openwrt/bin/ramips
