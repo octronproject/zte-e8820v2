@@ -60,6 +60,14 @@ jobs:
         echo "📥 Cloning OpenWrt v21.02.7..."
         git clone --depth 1 --branch v21.02.7 https://github.com/openwrt/openwrt.git openwrt
 
+    - name: Update and Install Feeds
+      run: |
+        set -e
+        cd openwrt
+        ./scripts/feeds update -a
+        ./scripts/feeds install -a
+        echo "✓ Feeds updated and installed"
+
     - name: Copy and overwrite custom files (with backups)
       run: |
         set -e
@@ -126,15 +134,7 @@ jobs:
         cp -a custom/. openwrt/custom/
 
         echo "✓ All custom files copied and overwritten as requested"
-
-    - name: Update and Install Feeds
-      run: |
-        set -e
-        cd openwrt
-        ./scripts/feeds update -a
-        ./scripts/feeds install -a
-        echo "✓ Feeds updated and installed"
-
+    
     - name: Prepare Build (apply .config)
       run: |
         set -e
