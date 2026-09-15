@@ -1,2 +1,2 @@
 # zte-e8820v2
-openwrt
+OpenWrt 21.02.7 Stable Release
