@@ -58,7 +58,7 @@ jobs:
       run: |
         set -e
         echo "📥 Cloning OpenWrt v21.02.7..."
-        git clone --depth 1 --branch v21.02.7 https://github.com/openwrt/openwrt.git openwrt
+        git clone --depth 1 --branch v21.02.7 https://github.com/openwrt/openwrt.git
 
     - name: Update and Install Feeds
       run: |
